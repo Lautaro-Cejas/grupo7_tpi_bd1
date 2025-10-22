@@ -1,76 +1,78 @@
--- ===============================================================
--- Script: 03_carga_masiva.sql
--- Propósito: Generar carga masiva
--- ===============================================================
-
 USE gestion_empleados_legajos;
 
--- ======================================
+-- ===============================
 -- LEGAJOS (50k)
--- ======================================
+-- ===============================
 INSERT INTO legajo (nro_legajo, categoria, estado, fecha_alta)
-WITH RECURSIVE seq AS (
-  SELECT 1 AS n
-  UNION ALL
-  SELECT n+1 FROM seq WHERE n < 50000
+WITH RECURSIVE seq_legajo AS (
+    SELECT 1 AS n
+    UNION ALL
+    SELECT n+1 FROM seq_legajo WHERE n < 50000
 )
 SELECT
-  CONCAT('LEG-', YEAR(DATE_ADD('2018-01-01', INTERVAL (n % 3650) DAY)), '-', LPAD(n,6,'0')),
-  CASE WHEN n % 3 = 1 THEN 'Junior' WHEN n % 3 = 2 THEN 'Semi-Senior' ELSE 'Senior' END,
-  CASE WHEN n % 10 = 0 THEN 'INACTIVO' ELSE 'ACTIVO' END,
-  DATE_ADD('2018-01-01', INTERVAL (n % 3650) DAY)
-FROM seq
+    CONCAT('LEG-', YEAR(DATE_ADD('2018-01-01', INTERVAL (n % 3650) DAY)), '-', LPAD(n,6,'0')),
+    CASE WHEN n % 3 = 1 THEN 'Junior' WHEN n % 3 = 2 THEN 'Semi-Senior' ELSE 'Senior' END,
+    CASE WHEN n % 10 = 0 THEN 'INACTIVO' ELSE 'ACTIVO' END,
+    DATE_ADD('2018-01-01', INTERVAL (n % 3650) DAY)
+FROM seq_legajo
 ON DUPLICATE KEY UPDATE nro_legajo = nro_legajo;
--- ======================================
+
+-- ===============================
 -- EMPLEADOS (50k)
--- ======================================
+-- ===============================
 INSERT INTO empleado (nombre, apellido, dni, cuil, email, fecha_ingreso, id_legajo, id_area, id_cargo, salario, estado)
-WITH RECURSIVE seq50k AS (
-  SELECT 1 AS n
-  UNION ALL
-  SELECT n+1 FROM seq50k WHERE n < 50000
+WITH RECURSIVE seq_emp AS (
+    SELECT 1 AS n
+    UNION ALL
+    SELECT n+1 FROM seq_emp WHERE n < 50000
 )
 SELECT
-  n.nombre,
-  a.apellido,
-  (20000000 + s.n),
-  CONCAT('20-', LPAD((20000000 + s.n),8,'0'), '-', (s.n % 10)),
-  CONCAT(LOWER(n.nombre),'.',LOWER(a.apellido),'.', s.n, '@empresa.com'),
-  DATE_ADD('2000-01-01', INTERVAL FLOOR(RAND()*9132) DAY),
-  ((s.n % (SELECT IFNULL(MAX(id_legajo),10000) FROM legajo)) + 1),
-  ((s.n % (SELECT COUNT(*) FROM area)) + 1),
-  ((s.n % (SELECT COUNT(*) FROM cargo)) + 1),
-  ROUND(60000 + FLOOR(RAND()*240000),2),
-  CASE WHEN (s.n % 100) < 80 THEN 'ACTIVO' WHEN (s.n % 100) < 90 THEN 'LICENCIA' WHEN (s.n % 100) < 95 THEN 'SUSPENDIDO' ELSE 'INACTIVO' END
-FROM seq50k s
+    n.nombre,
+    a.apellido,
+    (20000000 + s.n),
+    CONCAT('20-', LPAD((20000000 + s.n),8,'0'), '-', (s.n % 10)),
+    CONCAT(
+        LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(n.nombre,'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u')),
+        '.',
+        LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(a.apellido,'á','a'),'é','e'),'í','i'),'ó','o'),'ú','u')),
+        '.', s.n, '@empresa.com'
+    ),
+    DATE_ADD('2000-01-01', INTERVAL FLOOR(RAND()*9132) DAY),
+    s.n, -- id_legajo 1:1
+    ((s.n % (SELECT COUNT(*) FROM area)) + 1),
+    ((s.n % (SELECT COUNT(*) FROM cargo)) + 1),
+    ROUND(60000 + FLOOR(RAND()*240000),2),
+    CASE WHEN (s.n % 100) < 80 THEN 'ACTIVO' WHEN (s.n % 100) < 90 THEN 'LICENCIA' WHEN (s.n % 100) < 95 THEN 'SUSPENDIDO' ELSE 'INACTIVO' END
+FROM seq_emp s
 JOIN nombres_seed n ON ((s.n - 1) % (SELECT COUNT(*) FROM nombres_seed) + 1) = n.id_nombre
 JOIN apellidos_seed a ON ((s.n - 1) % (SELECT COUNT(*) FROM apellidos_seed) + 1) = a.id_apellido
 ON DUPLICATE KEY UPDATE dni = dni;
--- ======================================
+
+-- ===============================
 -- DOCUMENTOS (150k)
--- ======================================
-INSERT INTO documento_legajo (nro_documento, id_empleado, id_tipo, fecha_emision, estado)
-WITH RECURSIVE seq150k AS (
-  SELECT 1 AS n
-  UNION ALL
-  SELECT n+1 FROM seq150k WHERE n < 150000
+-- ===============================
+INSERT INTO documento_legajo (nro_documento, id_legajo, id_tipo, fecha_emision, estado)
+WITH RECURSIVE seq_docs AS (
+    SELECT 1 AS n
+    UNION ALL
+    SELECT n+1 FROM seq_docs WHERE n < 150000
 )
 SELECT
-  CONCAT('DOC-', LPAD(n,6,'0')),
-  ((n % (SELECT COUNT(*) FROM empleado)) + 1),
-  CASE
-    WHEN (n % 100) < 30 THEN (SELECT id_tipo FROM tipo_documento_legajo WHERE tipo_doc='CONTRATO' LIMIT 1)
-    WHEN (n % 100) < 55 THEN (SELECT id_tipo FROM tipo_documento_legajo WHERE tipo_doc='CERTIFICADO' LIMIT 1)
-    WHEN (n % 100) < 70 THEN (SELECT id_tipo FROM tipo_documento_legajo WHERE tipo_doc='CAPACITACION' LIMIT 1)
-    ELSE (SELECT id_tipo FROM tipo_documento_legajo WHERE tipo_doc='OTROS' LIMIT 1)
-  END,
-  DATE_ADD('2000-01-01', INTERVAL FLOOR(RAND()*9132) DAY),
-  CASE
-    WHEN (n % 100) < 85 THEN 'VIGENTE'
-    WHEN (n % 100) < 95 THEN 'VENCIDO'
-    ELSE 'ANULADO'
-  END
-FROM seq150k
+    CONCAT('DOC-', LPAD(n,6,'0')),
+    ((n % 50000) + 1), -- asignamos documentos a legajos existentes
+    CASE
+        WHEN (n % 100) < 30 THEN (SELECT id_tipo FROM tipo_documento_legajo WHERE tipo_doc='CONTRATO' LIMIT 1)
+        WHEN (n % 100) < 55 THEN (SELECT id_tipo FROM tipo_documento_legajo WHERE tipo_doc='CERTIFICADO' LIMIT 1)
+        WHEN (n % 100) < 70 THEN (SELECT id_tipo FROM tipo_documento_legajo WHERE tipo_doc='CAPACITACION' LIMIT 1)
+        ELSE (SELECT id_tipo FROM tipo_documento_legajo WHERE tipo_doc='OTROS' LIMIT 1)
+    END,
+    DATE_ADD('2000-01-01', INTERVAL FLOOR(RAND()*9132) DAY),
+    CASE
+        WHEN (n % 100) < 85 THEN 'VIGENTE'
+        WHEN (n % 100) < 95 THEN 'VENCIDO'
+        ELSE 'ANULADO'
+    END
+FROM seq_docs
 ON DUPLICATE KEY UPDATE nro_documento = nro_documento;
 
 -- =========================
@@ -136,8 +138,12 @@ WHERE email NOT LIKE CONCAT(LOWER(nombre),'.',LOWER(apellido),'%','@empresa.com'
 LIMIT 10;
 
 -- Documentos por empleado (promedio ~3)
-SELECT ROUND(AVG(cantidad),2) AS avg_docs_por_empleado FROM (
-  SELECT id_empleado, COUNT(*) AS cantidad FROM documento_legajo GROUP BY id_empleado
+SELECT ROUND(AVG(cantidad),2) AS avg_docs_por_empleado
+FROM (
+    SELECT e.id_empleado, COUNT(d.id_documento) AS cantidad
+    FROM empleado e
+    LEFT JOIN documento_legajo d ON d.id_legajo = e.id_legajo
+    GROUP BY e.id_empleado
 ) t;
 
 -- Empleados por área (para ver distribución)

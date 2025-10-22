@@ -30,13 +30,13 @@ DROP TABLE IF EXISTS documento_legajo;
 CREATE TABLE IF NOT EXISTS documento_legajo (
   id_documento BIGINT PRIMARY KEY AUTO_INCREMENT,
   nro_documento VARCHAR(40) NOT NULL UNIQUE,
-  id_empleado BIGINT,
-  id_tipo INT,
+  id_legajo BIGINT NOT NULL,
+  id_tipo INT NOT NULL,
   fecha_emision DATE,
   estado ENUM('VIGENTE','VENCIDO','ANULADO') DEFAULT 'VIGENTE',
   observaciones VARCHAR(255),
-  FOREIGN KEY (id_empleado) REFERENCES empleado(id_empleado) ON DELETE CASCADE,
-  FOREIGN KEY (id_tipo) REFERENCES tipo_documento_legajo(id_tipo) ON DELETE SET NULL
+  FOREIGN KEY (id_legajo) REFERENCES legajo(id_legajo) ON DELETE CASCADE,
+  FOREIGN KEY (id_tipo) REFERENCES tipo_documento_legajo(id_tipo) ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 -- ======================================
@@ -47,20 +47,20 @@ CREATE TABLE IF NOT EXISTS documento_legajo (
 TRUNCATE nombres_seed;
 INSERT INTO nombres_seed (nombre) VALUES
 ('Martín'),('Sofía'),('Mateo'),('Valentina'),('Santiago'),('Camila'),('Lucas'),('Isabella'),
-('Matías'),('Julieta'),('Agustín'),('Mía'),('Nicolás'),('Sofía2'),('Diego'),('Lucía'),
+('Matías'),('Julieta'),('Agustín'),('Mía'),('Nicolás'),('Diego'),('Lucía'),
 ('Federico'),('Emma'),('Tomás'),('María'),('Bruno'),('Sara'),('Emiliano'),('Pilar'),
 ('Joaquín'),('Antonia'),('Ignacio'),('Clara'),('Francisco'),('Victoria'),('Hernán'),('Bianca'),
 ('Alejandro'),('Catalina'),('Martina'),('Gaspar'),('Zoe'),('Andrés'),('Romina'),('Pablo'),
 ('Lorena'),('Adrián'),('Luna'),('Rubén'),('Josefina'),('Hugo'),('Manuela'),('Fabián'),
 ('Agustina'),('Nahuel'),('Mara'),('Esteban'),('Magdalena'),('Gonzalo'),('Aitana'),('Mario'),
-('Belén'),('Bruno2'),('Rodrigo'),('Ariadna'),('Álvaro'),('Fabiana'),('Santiago2'),('Verónica'),
+('Belén'),('Rodrigo'),('Ariadna'),('Álvaro'),('Fabiana'),('Verónica'),
 ('Ciro'),('Renata'),('Raúl'),('Carla'),('Baltazar'),('Noelia'),('Ramiro'),('Jimena'),
-('Darío'),('Florencia'),('Ezequiel'),('Celeste'),('Óscar'),('Jazmín'),('Óscar2'),('Lorena2'),
+('Darío'),('Florencia'),('Ezequiel'),('Celeste'),('Óscar'),('Jazmín'),
 ('Brenda'),('Sergio'),('Elena'),('Cristian'),('Soledad'),('Félix'),('Vanesa'),('César'),
-('Milagros'),('Rafael'),('Yesica'),('Jerónimo'),('Mara2'),('Raquel'),('Santiago3'),('Amalia'),
+('Milagros'),('Rafael'),('Yesica'),('Jerónimo'),('Raquel'),('Amalia'),
 ('Mauro'),('Ainhoa'),('Carolina'),('Nora'),('Benjamín'),('Javier'),('Sol'),('Germán'),
 ('Lola'),('Diana'),('Mariano'),('Yanina'),('Emanuel'),('Graciela'),('Iván'),('Rocío'),
-('Luciano'),('MaríaJosé'),('Nicolas2'),('Antonia2'),('Ulises'),('Priscila'),('Candelaria'),('Joel');
+('Luciano'),('MaríaJosé'),('Ulises'),('Priscila'),('Candelaria'),('Joel');
 
 -- APELLIDOS
 TRUNCATE apellidos_seed;
@@ -73,12 +73,12 @@ INSERT IGNORE INTO apellidos_seed (apellido) VALUES
 ('Suárez'),('Leiva'),('Lucero'),('Videla'),('Rivera'),('Peralta'),('Bruno'),('Núñez'),
 ('Herrero'),('Silveira'),('Barrios'),('Ponce'),('Acosta'),('Ferreyra'),('Tapia'),('Pizarro'),
 ('Gallo'),('Crespo'),('Aguilar'),('Quiroga'),('Serrano'),('Maldonado'),('Cárdenas'),('Bonilla'),
-('Rico'),('Mena'),('Paz2'),('Yáñez'),('Benavidez'),('Correa'),('Bustos'),('Cano'),
+('Rico'),('Mena'),('Yáñez'),('Benavidez'),('Correa'),('Bustos'),('Cano'),
 ('Roldán'),('León'),('Orellana'),('Zapata'),('Urbano'),('Maturana'),('Bermúdez'),('Cisneros'),
 ('Lemus'),('Alonso'),('Peña'),('Cortés'),('Montero'),('Quintana'),('Campos'),('Escobar'),
-('Guerra'),('Ramos2'),('Sáenz'),('Arce'),('Oliva'),('Ocampo'),('Figueroa'),('Zárate'),
+('Guerra'),('Sáenz'),('Arce'),('Oliva'),('Ocampo'),('Figueroa'),('Zárate'),
 ('Castillo'),('Cáceres'),('Alvarado'),('Cervantes'),('Santos'),('Viera'),('Luna'),('Bravo'),
-('Riquelme'),('Santos2'),('Chávez'),('Molina2'),('Pacheco'),('Almeida'),('Duarte'),('Méndez');
+('Riquelme'),('Chávez'),('Pacheco'),('Almeida'),('Duarte'),('Méndez');
 
 -- CARGOS (no se puede hacer TRUNCATE)
 INSERT IGNORE INTO cargo (nombre_cargo, salario_min, salario_max) VALUES
