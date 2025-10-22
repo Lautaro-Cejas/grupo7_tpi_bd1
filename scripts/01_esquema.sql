@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS empleado (
   cuil VARCHAR(15) NOT NULL UNIQUE,
   email VARCHAR(200) NOT NULL UNIQUE,
   fecha_ingreso DATE,
-  id_legajo BIGINT,
+  id_legajo BIGINT UNIQUE,
   id_area BIGINT,
   id_cargo BIGINT,
   salario DECIMAL(10,2),
