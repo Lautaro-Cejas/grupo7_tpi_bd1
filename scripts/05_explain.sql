@@ -2,10 +2,6 @@
 -- Script: 05_explain.sql  (versión idempotente y portable)
 -- Objetivo: Medición comparativa con/sin índice en 3 consultas 
 --           (Igualdad, Rango, JOIN) usando EXPLAIN
--- Notas:
---  - Compatible con MySQL 5.7/8.0 (sin DROP INDEX IF EXISTS).
---  - Usa INFORMATION_SCHEMA.STATISTICS + PREPARE/EXECUTE.
---  - Ejecutar cada SELECT 3 veces y registrar la mediana.
 -- ===============================================================
 
 USE gestion_empleados_legajos;
@@ -241,7 +237,7 @@ SET @sql = (
 );
 PREPARE s FROM @sql; EXECUTE s; DEALLOCATE PREPARE s;
 
--- (Opcional) mantener también el simple por FK; no interfiere.
+-- (Opcional) mantener también el índice simple por FK; este no interfiere.
 -- EXPLAIN (FORZANDO USO DEL COMPUESTO)
 EXPLAIN
 SELECT e.id_empleado, e.salario, c.nombre_cargo, c.salario_min, c.salario_max
